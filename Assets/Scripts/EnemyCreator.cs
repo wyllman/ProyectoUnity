@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
 
 public class EnemyCreator : MonoBehaviour {
 	// Prefab del objeto enemigo
@@ -15,12 +16,13 @@ public class EnemyCreator : MonoBehaviour {
 	private Vector3 guardPosF03 = new Vector3 (-10, 0, 10);
 
 	// Referencias a los enemigos generados actualmente.
-	private GameObject guardEnemyB01 = null;
-	private GameObject guardEnemyB02 = null;
+	private const int NUM_ENEMY = 10;
+	private List<GameObject> guardEnemyB01 = new List<GameObject> ();
+	private List<GameObject> guardEnemyB02 = new List<GameObject> ();
 
-	private GameObject guardEnemyF01 = null;
-	private GameObject guardEnemyF02 = null;
-	private GameObject guardEnemyF03 = null;
+	private List<GameObject> guardEnemyF01 = new List<GameObject> ();
+	private List<GameObject> guardEnemyF02 = new List<GameObject> ();
+	private List<GameObject> guardEnemyF03 = new List<GameObject> ();
 
 	// Contadores de tiempo de espera para una nueva
 	// generación de enemigos.
@@ -46,16 +48,16 @@ public class EnemyCreator : MonoBehaviour {
 		checkEnemiesPos (ref guardEnemyF03, guardPosF03, ref timeIdleF03);
 	}
 
-	void checkEnemiesPos (ref GameObject enemyObj, Vector3 generatePos, ref float timeIdle) {
-		if (enemyObj == null) {
+	void checkEnemiesPos (ref List<GameObject> enemyObj, Vector3 generatePos, ref float timeIdle) {
+		if (enemyObj.Count < 10) {
 		  if (timeIdle > 0) {
 			timeIdle -= Time.deltaTime;
 		  } else {
 			timeIdle = IDLE_TIME;
-			enemyObj = GameObject.Instantiate (
+			enemyObj.Add( GameObject.Instantiate (
 				enemyPrefab,
 				generatePos,
-				Quaternion.identity) as GameObject;
+				Quaternion.identity) as GameObject);
 		  }
 		}
 		
