@@ -26,12 +26,12 @@ public class Enemy : MonoBehaviour {
 	 * Constantes de configuración del enemigo.
 	 */
 	private const float SOUND_RANGE = 15.0f; // Distancia de escucha.
-	private const float VISION_RANGE = 7.0f; // Distancia de visión.
+	private const float VISION_RANGE = 10.0f; // Distancia de visión.
 	private const float VISION_ANGLE = 45.0f; // Ángulo de visión.
 	private const float ATTACK_RANGE = 4.0f; // Distancia de ataque.
 	
 	private const float LINEAR_FORCE = 100.0f; // Fuerza de movimiento lineal.
-	private const float ANGULAR_FORCE = 10.0f; // Fuerza de movimiento angular.
+	private const float ANGULAR_FORCE = 50.0f; // Fuerza de movimiento angular.
 
 	private const float MAX_LIN_VEL = 5.0f; // Velocidad lineal máxima.
 	private const float MAX_ANG_VEL = 5.0f; // Velocidad angular máxima.
@@ -50,6 +50,8 @@ public class Enemy : MonoBehaviour {
 	private float timeTargetLost = IDLE_TIME; // Contador de tiempo en el que no se ha visto al jugador.
 	private float actualLive = MAX_LIVE; // Contador de vida del enemigo.
 
+	private LineRenderer lineRenderer; // = gameObject.AddComponent<LineRenderer>();
+	private LineRenderer lineRenderer2;
 	/*
 	 * Funciones de Unity:
 	 * 
@@ -61,10 +63,20 @@ public class Enemy : MonoBehaviour {
 	   
 	   // Buscando acceso al objeto arma del enemigo.
 	   weapon01 = transform.FindChild ("Weapon01");
+
+		lineRenderer = gameObject.AddComponent<LineRenderer>();
+
+		GameObject newLine = new GameObject("Line");
+	    lineRenderer2 = newLine.AddComponent<LineRenderer>();
+		newLine.transform.parent = transform;
+
 	}
 	void Update () {
 	   // Vector desde el enemigo al jugador
 	   Vector3 towardsTarget = target.position - transform.position;
+
+		drawCircle (SOUND_RANGE);
+		drawConeVis (VISION_RANGE, VISION_ANGLE);
 
 	   if (actualLive <= 0) {
 	      autoDestruct();
@@ -215,6 +227,65 @@ public class Enemy : MonoBehaviour {
 	/*
 	 * Funciones internas
 	 */
+	void drawCircle (float radio) {
+		float theta_scale = 0.1f;             //Set lower to add more points
+		int size = (int)((2.0f * Mathf.PI) / theta_scale); //Total number of points in circle.
+
+		lineRenderer.material = new Material(Shader.Find("Particles/Additive"));
+		lineRenderer.SetColors(Color.red, Color.red);
+		lineRenderer.SetWidth(0.1f, 0.1f);
+		lineRenderer.SetVertexCount(size);
+		
+		int i = 0;
+		float x, z;
+		for(float theta = 0; theta < (2.0f * Mathf.PI) - theta_scale; theta += theta_scale) {
+			x = radio * Mathf.Cos(theta);
+			z = radio * Mathf.Sin(theta);
+			
+			Vector3 pos = new Vector3(x, 0.5f, z);
+			pos += transform.position;
+			lineRenderer.SetPosition(i, pos);
+			i+=1;
+		}
+	}
+	void drawConeVis (float radio, float angle) {
+		float enemyFrontAngle = Vector3.Angle (transform.forward, new Vector3 (1, 0, 0));
+		Vector3 vectTmp = Vector3.Cross (transform.forward, new Vector3 (1, 0, 0));
+		enemyFrontAngle *= Mathf.Deg2Rad;
+		//Debug.Log (enemyFrontAngle);
+		if (vectTmp.y < 0) {
+			enemyFrontAngle = (360.0f * Mathf.Deg2Rad) - enemyFrontAngle;
+		}
+		angle *= Mathf.Deg2Rad;
+
+		float theta_scale = 0.1f;             //Set lower to add more points
+		int size = (int)((2.0f * angle) / theta_scale); //Total number of points in circle.
+
+		lineRenderer2.material = new Material(Shader.Find("Particles/Additive"));
+		lineRenderer2.SetColors(Color.blue, Color.blue);
+		lineRenderer2.SetWidth(0.2F, 0.2F);
+		lineRenderer2.SetVertexCount(size + 2);
+		
+		int i = 0;
+		float x, z;
+		Vector3 pos = new Vector3(transform.position.x, transform.position.y, transform.position.z);
+		lineRenderer2.SetPosition(i, pos);
+		i+=1;
+		
+		for(float theta = enemyFrontAngle - angle; theta < (enemyFrontAngle + angle) - theta_scale; theta += theta_scale) {
+			x = radio * Mathf.Cos(theta);
+			z = radio * Mathf.Sin(theta);
+			
+			pos = new Vector3(x, 0.5f, z);
+			pos += transform.position;
+			lineRenderer2.SetPosition(i, pos);
+			i+=1;
+		}
+		pos = new Vector3(transform.position.x, transform.position.y, transform.position.z);
+		lineRenderer2.SetPosition(i, pos);
+		i+=1;
+
+	}
 	void linearDecelerate () {
 		float vectorMag = rigidbody.velocity.magnitude;
 		if (vectorMag < 1.0f) {
