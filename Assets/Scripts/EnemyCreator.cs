@@ -58,6 +58,7 @@ public class EnemyCreator : MonoBehaviour {
 				enemyPrefab,
 				generatePos,
 				Quaternion.identity) as GameObject);
+			
 		  }
 		}
 		
