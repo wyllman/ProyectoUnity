@@ -338,7 +338,7 @@ public class Enemy : MonoBehaviour {
 	   Ray thePlayerRay = new Ray (this.transform.position, this.transform.forward);
 	   RaycastHit thePlayerHit;
 	   
-	   if (Physics.Raycast(thePlayerRay, out thePlayerHit, VISION_RANGE)) {
+		if (Physics.Raycast(thePlayerRay, out thePlayerHit, VISION_RANGE, rayCastMask)) {
 		  if (thePlayerHit.transform.name == "Player") {
 		     timeTargetLost = IDLE_TIME;
 	         result = true;
@@ -351,7 +351,7 @@ public class Enemy : MonoBehaviour {
 		Ray thePlayerRay = new Ray (this.transform.position, towardsTarget.normalized);
 		RaycastHit thePlayerHit;
 
-		if (Physics.Raycast(thePlayerRay, out thePlayerHit, VISION_RANGE)) {
+		if (Physics.Raycast(thePlayerRay, out thePlayerHit, VISION_RANGE, rayCastMask)) {
 			if (thePlayerHit.transform.name == "Player") {
 				timeTargetLost = IDLE_TIME;
 				result = true;
