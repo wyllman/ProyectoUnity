@@ -61,6 +61,11 @@ public class EnemyCreator : MonoBehaviour {
 			
 		  }
 		}
+		for (int i = 0; i < enemyObj.Count; ++i) {
+			if (enemyObj[i] == null) {
+				enemyObj.RemoveAt(i);
+			}
+		}
 		
 	}
 }

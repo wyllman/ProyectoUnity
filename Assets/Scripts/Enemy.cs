@@ -116,14 +116,18 @@ public class Enemy : MonoBehaviour {
 	void lookingAction (Vector3 towardsTarget) {
 		Vector3 vectorTmp;
 		float torque = ANGULAR_FORCE;
-		linearDecelerate ();
+		float accelerate = LINEAR_FORCE * 0.4f;
+
 
 		if (!isPointTarget ()) {
 	       // Si no se ha visto al enemigo girar en la dirección en la que se le 
 	       // escucha.
 			if (isTargetInVisionField (towardsTarget)) {
+				rigidbody.AddForce (towardsTarget.normalized * LINEAR_FORCE * Time.deltaTime);
 				actualState = EnemyStates.PURSUIT_TRAGET;
 				//torque *= 0.7f;
+			} else {
+				linearDecelerate ();
 			}
 		   vectorTmp = Vector3.Cross (transform.forward, towardsTarget.normalized);
 	       rigidbody.AddTorque (transform.up * vectorTmp.y * torque * Time.deltaTime);
@@ -356,7 +360,7 @@ public class Enemy : MonoBehaviour {
 		return result;
 	}
 	void hitEnemy () {
-	   actualLive -= 1;
+	   actualLive -= 10;
 	   Debug.Log ("Enemy live: " + actualLive);
 	}
 	void autoDestruct() {	
