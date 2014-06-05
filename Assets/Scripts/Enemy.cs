@@ -22,12 +22,13 @@ public class Enemy : MonoBehaviour {
 	enum EnemyStates { IDLE, LOOKING_TARGET, PURSUIT_TRAGET, SHOOT_TARGET };
 	private EnemyStates actualState = EnemyStates.IDLE;
 
+
 	/*
 	 * Constantes de configuración del enemigo.
 	 */
 	private const float SOUND_RANGE = 15.0f; // Distancia de escucha.
 	private const float VISION_RANGE = 10.0f; // Distancia de visión.
-	private const float VISION_ANGLE = 45.0f; // Ángulo de visión.
+	private const float VISION_ANGLE = 40.0f; // Ángulo de visión.
 	private const float ATTACK_RANGE = 4.0f; // Distancia de ataque.
 	
 	private const float LINEAR_FORCE = 100.0f; // Fuerza de movimiento lineal.
@@ -52,6 +53,9 @@ public class Enemy : MonoBehaviour {
 
 	private LineRenderer lineRenderer; // = gameObject.AddComponent<LineRenderer>();
 	private LineRenderer lineRenderer2;
+
+	public LayerMask rayCastMask;
+	public bool showSensors = true;
 	/*
 	 * Funciones de Unity:
 	 * 
@@ -75,8 +79,13 @@ public class Enemy : MonoBehaviour {
 	   // Vector desde el enemigo al jugador
 	   Vector3 towardsTarget = target.position - transform.position;
 
-		drawCircle (SOUND_RANGE);
-		drawConeVis (VISION_RANGE, VISION_ANGLE);
+	   if (showSensors) {
+	      drawCircle (SOUND_RANGE);
+	      drawConeVis (VISION_RANGE, VISION_ANGLE);
+	   } else {
+		  lineRenderer.SetVertexCount(0);
+		  lineRenderer2.SetVertexCount(0);
+	   }
 
 	   if (actualLive <= 0) {
 	      autoDestruct();
@@ -95,7 +104,7 @@ public class Enemy : MonoBehaviour {
 	void idleAction () {
        if (timeForIdle <= 0) {
 	      // Frenar al enemigo lineal y angularmente.
-	      if (rigidbody.velocity.magnitude > 0) {
+	      if (rigidbody.velocity.magnitude > 0 || rigidbody.angularVelocity.magnitude > 0) {
 	         rigidbody.velocity = Vector3.ClampMagnitude (rigidbody.velocity, 0);
 	         rigidbody.angularVelocity = Vector3.ClampMagnitude (rigidbody.angularVelocity, 0);
 	      }
@@ -106,13 +115,18 @@ public class Enemy : MonoBehaviour {
 	}
 	void lookingAction (Vector3 towardsTarget) {
 		Vector3 vectorTmp;
+		float torque = ANGULAR_FORCE;
 		linearDecelerate ();
 
 		if (!isPointTarget ()) {
 	       // Si no se ha visto al enemigo girar en la dirección en la que se le 
 	       // escucha.
+			if (isTargetInVisionField (towardsTarget)) {
+				actualState = EnemyStates.PURSUIT_TRAGET;
+				//torque *= 0.7f;
+			}
 		   vectorTmp = Vector3.Cross (transform.forward, towardsTarget.normalized);
-	       rigidbody.AddTorque (transform.up * vectorTmp.y * ANGULAR_FORCE * Time.deltaTime);
+	       rigidbody.AddTorque (transform.up * vectorTmp.y * torque * Time.deltaTime);
 		   rigidbody.angularVelocity = Vector3.ClampMagnitude (rigidbody.angularVelocity, MAX_ANG_VEL);
 		} else {
 	       // Dispara y pasar al estado persecución.
@@ -123,11 +137,16 @@ public class Enemy : MonoBehaviour {
 	}
 	void pursuitAction (Vector3 towardsTarget) {
 	   // Perseguir al jugador y disparar si está a tiro.
-	   angDecelerate ();
+	   Vector3 vectorTmp = Vector3.Cross (transform.forward, towardsTarget.normalized);
+	   float torque = ANGULAR_FORCE * 0.4f;
+
 	   rigidbody.AddForce (towardsTarget.normalized * LINEAR_FORCE * Time.deltaTime);
 	   rigidbody.velocity = Vector3.ClampMagnitude (rigidbody.velocity, MAX_LIN_VEL);
 	   if (isPointTarget ()) {
+	      angDecelerate ();
 	      shootWeapon ();
+	   } else {
+	      rigidbody.AddTorque (transform.up * vectorTmp.y * torque * Time.deltaTime);
 	   }
 	}
 	void shootAction (Vector3 towardsTarget) {
@@ -136,6 +155,7 @@ public class Enemy : MonoBehaviour {
 	   // En caso contrario, girar mas rápidamente hacia el jugador.
 	   Vector3 vectorTmp = Vector3.Cross (transform.forward, towardsTarget.normalized);
 	   float angleTmp = Vector3.Angle (transform.forward, towardsTarget.normalized);
+	  
 
 	   linearDecelerate ();
 
@@ -234,11 +254,11 @@ public class Enemy : MonoBehaviour {
 		lineRenderer.material = new Material(Shader.Find("Particles/Additive"));
 		lineRenderer.SetColors(Color.red, Color.red);
 		lineRenderer.SetWidth(0.1f, 0.1f);
-		lineRenderer.SetVertexCount(size);
+		lineRenderer.SetVertexCount(size + 1);
 		
 		int i = 0;
 		float x, z;
-		for(float theta = 0; theta < (2.0f * Mathf.PI) - theta_scale; theta += theta_scale) {
+		for(float theta = 0; theta < (2.0f * Mathf.PI); theta += theta_scale) {
 			x = radio * Mathf.Cos(theta);
 			z = radio * Mathf.Sin(theta);
 			
@@ -263,8 +283,8 @@ public class Enemy : MonoBehaviour {
 
 		lineRenderer2.material = new Material(Shader.Find("Particles/Additive"));
 		lineRenderer2.SetColors(Color.blue, Color.blue);
-		lineRenderer2.SetWidth(0.2F, 0.2F);
-		lineRenderer2.SetVertexCount(size + 2);
+		lineRenderer2.SetWidth(0.1F, 0.1F);
+		lineRenderer2.SetVertexCount(size + 3);
 		
 		int i = 0;
 		float x, z;
@@ -272,7 +292,7 @@ public class Enemy : MonoBehaviour {
 		lineRenderer2.SetPosition(i, pos);
 		i+=1;
 		
-		for(float theta = enemyFrontAngle - angle; theta < (enemyFrontAngle + angle) - theta_scale; theta += theta_scale) {
+		for(float theta = enemyFrontAngle - angle; theta < (enemyFrontAngle + angle); theta += theta_scale) {
 			x = radio * Mathf.Cos(theta);
 			z = radio * Mathf.Sin(theta);
 			
@@ -321,6 +341,19 @@ public class Enemy : MonoBehaviour {
 	      }
 	   }
 	   return result;
+	}
+	bool isTargetInVisionField (Vector3 towardsTarget) {
+		bool result = false;
+		Ray thePlayerRay = new Ray (this.transform.position, towardsTarget.normalized);
+		RaycastHit thePlayerHit;
+
+		if (Physics.Raycast(thePlayerRay, out thePlayerHit, VISION_RANGE)) {
+			if (thePlayerHit.transform.name == "Player") {
+				timeTargetLost = IDLE_TIME;
+				result = true;
+			}
+		}
+		return result;
 	}
 	void hitEnemy () {
 	   actualLive -= 1;

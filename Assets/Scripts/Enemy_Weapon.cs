@@ -3,7 +3,7 @@ using System.Collections;
 
 public class Enemy_Weapon : MonoBehaviour {
 
-	public float launchForce = 400;
+	public float launchForce = 150;
 	public GameObject ammoPrefab;
 
 	private float attackTime = 0.75f;

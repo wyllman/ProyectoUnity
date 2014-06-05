@@ -16,7 +16,7 @@ public class EnemyCreator : MonoBehaviour {
 	private Vector3 guardPosF03 = new Vector3 (-10, 0, 10);
 
 	// Referencias a los enemigos generados actualmente.
-	private const int NUM_ENEMY = 10;
+	private const int NUM_ENEMY = 1;
 	private List<GameObject> guardEnemyB01 = new List<GameObject> ();
 	private List<GameObject> guardEnemyB02 = new List<GameObject> ();
 
@@ -49,7 +49,7 @@ public class EnemyCreator : MonoBehaviour {
 	}
 
 	void checkEnemiesPos (ref List<GameObject> enemyObj, Vector3 generatePos, ref float timeIdle) {
-		if (enemyObj.Count < 10) {
+		if (enemyObj.Count < NUM_ENEMY) {
 		  if (timeIdle > 0) {
 			timeIdle -= Time.deltaTime;
 		  } else {
